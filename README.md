@@ -1,5 +1,18 @@
 # Bitcore
 
+
+
+  <p align="center">
+  <img alt="npm" src="https://img.shields.io/npm/v/bitcore-lib">
+  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/bitpay/bitcore">
+  <a href="https://opensource.org/licenses/MIT/" target="_blank"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-blue.svg" style="display: inherit;"/></a>
+  <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/bitpay/bitcore">
+  <br>
+ <img src="https://circleci.com/gh/bitpay/bitcore.svg?style=shield" alt="master build">
+</p>
+  
+  
+  
 **Infrastructure to build Bitcoin and blockchain-based applications for the next generation of financial technology.**
 
 ## Getting Started
@@ -8,8 +21,10 @@
 
 - Trusted P2P Peer
 - MongoDB Server >= v3.4
+- make g++ gcc 
 
 ### Checkout the repo
+
 
 ```sh
 git clone git@github.com:bitpay/bitcore.git
@@ -155,7 +170,7 @@ npm run node
 - [Bitcore Wallet Client](packages/bitcore-wallet-client) - A client for the wallet service
 - [Bitcore Wallet Service](packages/bitcore-wallet-service) - A multisig HD service for wallets
 - [Bitpay Wallet](https://github.com/bitpay/copay) - An easy-to-use, multiplatform, multisignature, secure bitcoin wallet
-- [Insight](packages/insight-previous) - A blockchain explorer web user interface
+- [Insight](packages/insight) - A blockchain explorer web user interface
 
 ## Libraries
 
