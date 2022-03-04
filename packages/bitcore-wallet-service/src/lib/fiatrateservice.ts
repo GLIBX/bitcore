@@ -57,7 +57,7 @@ export class FiatRateService {
 
   _fetch(cb?) {
     cb = cb || function() {};
-    const coins = ['btc', 'bch', 'eth', 'xrp', 'doge'];
+    const coins = ['btc', 'bch', 'eth', 'xrp', 'doge', 'ltc', 'shib'];
     const provider = this.providers[0];
 
     //    async.each(this.providers, (provider, next) => {
@@ -122,14 +122,9 @@ export class FiatRateService {
     async.map(
       [].concat(ts),
       (ts, cb) => {
-        // Temporary rates for Wallet Beta. TODO: Remove this
         if (coin === 'wbtc') {
           logger.info('Using btc for wbtc rate.');
           coin = 'btc';
-        }
-        if (coin === 'dai') {
-          logger.info('Using usdc for dai rate.');
-          coin = 'usdc';
         }
         this.storage.fetchFiatRate(coin, opts.code, ts, (err, rate) => {
           if (err) return cb(err);
@@ -173,7 +168,12 @@ export class FiatRateService {
         async.map(
           currencies,
           (currency, cb) => {
-            this.storage.fetchFiatRate(coin, currency.code, ts, (err, rate) => {
+            let c = coin;
+            if (coin === 'wbtc') {
+              logger.info('Using btc for wbtc rate.');
+              c = 'btc';
+            }
+            this.storage.fetchFiatRate(c, currency.code, ts, (err, rate) => {
               if (err) return cb(err);
               if (rate && ts - rate.ts > Defaults.FIAT_RATE_MAX_LOOK_BACK_TIME * 60 * 1000) rate = null;
               return cb(null, {
@@ -202,41 +202,43 @@ export class FiatRateService {
 
   getRatesByCoin(opts, cb) {
     $.shouldBeFunction(cb, 'Failed state: type error (cb not a function) at <getRatesByCoin()>');
-
-    opts = opts || {};
-    const rates = [];
-
-    const now = Date.now();
-    const coin = opts.coin;
-    const ts = opts.ts ? opts.ts : now;
+    
+    let { coin, code } = opts;
+    const ts = opts.ts || Date.now();
+    
+    if (Constants.USD_STABLECOINS[coin.toUpperCase()]) {
+      return this.getRatesForStablecoin({ code: 'USD', ts }, cb);
+    }
+    
     let fiatFiltered = [];
-
-    if (opts.code) {
+    
+    if (code) {
       fiatFiltered = _.filter(Defaults.FIAT_CURRENCIES, ['code', opts.code]);
       if (!fiatFiltered.length) return cb(opts.code + ' is not supported');
     }
+
     const currencies: { code: string; name: string }[] = fiatFiltered.length ? fiatFiltered : Defaults.FIAT_CURRENCIES;
 
     async.map(
       currencies,
       (currency, cb) => {
+        if (coin === 'wbtc') {
+          logger.info('Using btc for wbtc rate.');
+          coin = 'btc';
+        }
         this.storage.fetchFiatRate(coin, currency.code, ts, (err, rate) => {
           if (err) return cb(err);
           if (rate && ts - rate.ts > Defaults.FIAT_RATE_MAX_LOOK_BACK_TIME * 60 * 1000) rate = null;
-          rates.push({
+          return cb(null, {
             ts: +ts,
             rate: rate ? rate.value : undefined,
             fetchedOn: rate ? rate.ts : undefined,
             code: currency.code,
             name: currency.name
           });
-          return cb(null, rates);
         });
       },
-      (err, res: any) => {
-        if (err) return cb(err);
-        return cb(null, res[0]);
-      }
+      cb
     );
   }
 
@@ -249,7 +251,7 @@ export class FiatRateService {
     // Oldest date in timestamp range in epoch number ex. 24 hours ago
     const now = Date.now() - Defaults.FIAT_RATE_FETCH_INTERVAL * 60 * 1000;
     const ts = _.isNumber(opts.ts) ? opts.ts : now;
-    const coins = ['btc', 'bch', 'eth', 'xrp', 'doge'];
+    const coins = ['btc', 'bch', 'eth', 'xrp', 'doge', 'ltc', 'shib'];
 
     async.map(
       coins,
@@ -273,5 +275,34 @@ export class FiatRateService {
         return cb(null, res[0]);
       }
     );
+  }
+
+  /**
+   * @description calculates fiat rates for a stablecoin
+   * @param {String} [opts.coin] crypto to base the fiat rates on (defaults to 'btc')
+   * @param {String} opts.code code for fiat currency that the stablecoin is pegged to
+   * @param {Number} [opts.ts] timestamp (defaults to now)
+   * @param {Function} cb
+   */
+  getRatesForStablecoin(opts, cb) {
+    $.shouldBeFunction(cb, 'Failed state: type error (cb not a function) at <getRatesForStablecoin()>');
+
+    const { coin = 'btc', code } = opts;
+    const ts = opts.ts || Date.now();
+
+    this.getRatesByCoin({ coin, ts }, (err, rates) => {
+      if (err) return cb(err);
+  
+      const fiatRate = rates.find(rate => rate.code === code);
+      if (!fiatRate || !fiatRate.rate) return cb(null, []);
+
+      return cb(
+        null,
+        rates.map(({ rate, ...obj }) => ({
+          ...obj,
+          rate: parseFloat((rate / fiatRate.rate).toFixed(2))
+        }))
+      );
+    });
   }
 }

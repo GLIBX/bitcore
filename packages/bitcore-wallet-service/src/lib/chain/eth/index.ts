@@ -148,21 +148,28 @@ export class EthChain implements IChain {
         const { coin, network } = wallet;
         let inGasLimit;
         let gasLimit;
-        let defaultGasLimit;
+        const defaultGasLimit = opts.tokenAddress ? Defaults.DEFAULT_ERC20_GAS_LIMIT : Defaults.DEFAULT_GAS_LIMIT;
         let fee = 0;
         for (let output of opts.outputs) {
           if (!output.gasLimit) {
             try {
+              const to = opts.payProUrl
+                ? output.toAddress
+                : opts.tokenAddress
+                ? opts.tokenAddress
+                : opts.multisigContractAddress
+                ? opts.multisigContractAddress
+                : output.toAddress;
+              const value = opts.tokenAddress || opts.multisigContractAddress ? 0 : output.amount;
               inGasLimit = await server.estimateGas({
                 coin,
                 network,
                 from,
-                to: output.toAddress,
-                value: output.amount,
+                to,
+                value,
                 data: output.data,
                 gasPrice
               });
-              defaultGasLimit = opts.tokenAddress ? Defaults.DEFAULT_ERC20_GAS_LIMIT : Defaults.DEFAULT_GAS_LIMIT;
               output.gasLimit = inGasLimit || defaultGasLimit;
             } catch (err) {
               output.gasLimit = defaultGasLimit;
@@ -183,8 +190,8 @@ export class EthChain implements IChain {
   }
 
   getBitcoreTx(txp, opts = { signed: true }) {
-    const { data, outputs, payProUrl, tokenAddress, multisigContractAddress } = txp;
-    const isERC20 = tokenAddress && !payProUrl;
+    const { data, outputs, payProUrl, tokenAddress, multisigContractAddress, isTokenSwap } = txp;
+    const isERC20 = tokenAddress && !payProUrl && !isTokenSwap;
     const isETHMULTISIG = multisigContractAddress;
     const chain = isETHMULTISIG ? 'ETHMULTISIG' : isERC20 ? 'ERC20' : 'ETH';
     const recipients = outputs.map(output => {

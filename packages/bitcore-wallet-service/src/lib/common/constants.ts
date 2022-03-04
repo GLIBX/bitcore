@@ -2,18 +2,32 @@
 import * as CWC from 'crypto-wallet-core';
 
 module.exports = {
+  CHAINS: {
+    BTC: 'btc',
+    BCH: 'bch',
+    ETH: 'eth',
+    XRP: 'xrp',
+    DOGE: 'doge',
+    LTC: 'ltc'
+  },
+
+  // TODO rethink COINS. If we want to concatenate CHAINS + ERC20's, we can do that in the implementation.
+  // In the future, ERC20 "coins" may not be specific to ETH, so inferring that a USDC coin is on ETH (for example) may be incorrect.
+  // Perhaps, this should be a nested object, with there being coins nested inside smart chains.
   COINS: {
     BTC: 'btc',
     BCH: 'bch',
     ETH: 'eth',
     XRP: 'xrp',
     DOGE: 'doge',
+    LTC: 'ltc',
     USDC: 'usdc',
     PAX: 'pax',
     GUSD: 'gusd',
     BUSD: 'busd',
     DAI: 'dai',
-    WBTC: 'wbtc'
+    WBTC: 'wbtc',
+    SHIB: 'shib'
   },
 
   ERC20: {
@@ -22,13 +36,23 @@ module.exports = {
     GUSD: 'gusd',
     BUSD: 'busd',
     DAI: 'dai',
-    WBTC: 'wbtc'
+    WBTC: 'wbtc',
+    SHIB: 'shib'
+  },
+
+  USD_STABLECOINS: {
+    USDC: 'usdc',
+    PAX: 'pax',
+    GUSD: 'gusd',
+    BUSD: 'busd',
+    DAI: 'dai'
   },
 
   UTXO_COINS: {
     BTC: 'btc',
     BCH: 'bch',
-    DOGE: 'doge'
+    DOGE: 'doge',
+    LTC: 'ltc'
   },
 
   NETWORKS: {
